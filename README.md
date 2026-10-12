@@ -1,10 +1,24 @@
+<p align="center"><img src="docs/banner.png" alt="Interior Design Visualizer" width="100%"></p>
+
 # Interior Design Visualizer
 
-A single-file, in-browser **3D interior designer for Indian homes**. Drop in your floor plan, then furnish, paint and walk through it in 3D. It checks the design against **Vastu** and keeps a running **budget / shopping list**.
+A single-file, in-browser **3D interior designer for any home or apartment**. Drop in your floor plan, then furnish, paint and walk through it in 3D. It checks the design against **Vastu** (optional) and keeps a running **budget / shopping list**.
 
-**Live app:** https://markiv25.github.io/interior_design_visulizer/ (or download `interactive_interior_visualizer.html` and open it in Chrome — there's no build step and no server).
+**Live app:** http://myweoo.com/interior_design_visulizer/ (or download `interactive_interior_visualizer.html` and open it in Chrome — there's no build step and no server).
 
 > **About the sample plan.** The built-in “Unit 1 · 2BHK · 618 sq.ft” home, and `samples/sample-2bhk-floor-plan.jpg`, use a **stock floor plan picked at random from the internet**. It's only a demo layout, not anyone's real address or property.
+
+## Screenshots
+
+| Walk through your home | Whole home in 3D |
+|---|---|
+| ![Walk-through of the living room](docs/screenshots/02_walk_living.jpg) | ![Whole home in 3D](docs/screenshots/01_home_3d.jpg) |
+| **Floor-plan editor (AI-read, then fix)** | **Your new home, auto-furnished** |
+| ![Floor-plan editor](docs/screenshots/09_editor.jpg) | ![New home in 3D](docs/screenshots/10_new_home_3d.jpg) |
+| **Kitchen** | **Bedroom** |
+| ![Kitchen walk-through](docs/screenshots/04_walk_kitchen.jpg) | ![Bedroom walk-through](docs/screenshots/05_walk_bedroom.jpg) |
+| **Vastu score & zone overlay** | **Budget & shopping list** |
+| ![Vastu checks](docs/screenshots/06_vastu.jpg) | ![Budget tab](docs/screenshots/07_budget.jpg) |
 
 ---
 
@@ -65,4 +79,5 @@ Claude reads the link, image or name, sizes the product correctly, puts it in th
 
 - One self-contained HTML file using three.js r128, Tailwind (CDN) and Font Awesome. Product images are embedded as WebP data URIs. 1 unit = 1 foot.
 - A floor plan is data: `rooms` (typed rectangles), `walls` (axis-aligned centre-lines with door, window and opening `ops`) and `blocks`. The built-in sample lives in `BUILTIN_PLAN`; your homes are stored in `localStorage` (`interior-studio-plan-<id>` and `interior-studio-design-<id>`).
+- Prices are shown in ₹ (INR) and sizes in feet / inches; enter your own prices for any product.
 - Everything stays in your browser. Clearing site data deletes your homes, so export them with **Homes → ⬇** to keep a backup.

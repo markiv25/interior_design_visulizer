@@ -671,7 +671,7 @@ const SWATCHES = ['#f3efe7', '#d8d0c3', '#b9bcb6', '#9aa5a0', '#5b6b5a', '#c9b79
 const PRESETS = [
   { name: 'Scandi Light', icon: 'fa-snowflake', walls: { _: '#f5f3ef', bed1: '#e8eee6', bed2: '#e9eef3' }, floors: { _: 'whiteoak', kitchen: 'terrazzo', bath1: 'bathtile', bath2: 'bathtile' },
     colors: { sofa3: '#b9bcb6', sofa2: '#b9bcb6', lsofa: '#b9bcb6', armchair: '#d8d0c3', bedQueen: '#eeeae2', bedKing: '#eeeae2', curtain: '#efe9dd', rug: '#d8d0c3' } },
-  { name: 'Warm Indian', icon: 'fa-sun', walls: { _: '#f2ebe1', living: '#efe3d0', bed1: '#e3c5a8', bed2: '#e9dfc4' }, floors: { _: 'herringbone', kitchen: 'vitrified', bath1: 'bathtile', bath2: 'bathtile' },
+  { name: 'Warm Earthy', icon: 'fa-sun', walls: { _: '#f2ebe1', living: '#efe3d0', bed1: '#e3c5a8', bed2: '#e9dfc4' }, floors: { _: 'herringbone', kitchen: 'vitrified', bath1: 'bathtile', bath2: 'bathtile' },
     colors: { sofa3: '#b5562f', sofa2: '#b5562f', lsofa: '#b5562f', armchair: '#d99a3c', bedQueen: '#e8d9c0', bedKing: '#e8d9c0', curtain: '#d99a3c', rug: '#a8633f' } },
   { name: 'Modern Mono', icon: 'fa-circle-half-stroke', walls: { _: '#e5e7eb', living: '#d1d5db', bed1: '#3f4b5b', bed2: '#e5e7eb' }, floors: { _: 'marble', bed1: 'walnut', bed2: 'walnut', kitchen: 'greytile', bath1: 'greytile', bath2: 'greytile' },
     colors: { sofa3: '#374151', sofa2: '#374151', lsofa: '#374151', armchair: '#9ca3af', bedQueen: '#9ca3af', bedKing: '#9ca3af', curtain: '#4b5563', rug: '#6b7280' } },
@@ -865,6 +865,7 @@ function scheduleSave() {
   el.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving';
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
+    if (typeof leavingHome !== 'undefined' && leavingHome) return;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); el.innerHTML = '<i class="fa-solid fa-check"></i> Saved'; }
     catch (e) { el.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Not saved (export instead)'; }
   }, 350);
@@ -3952,7 +3953,7 @@ function autoFurnish(st) {
         break;
       }
       case 'dining': if (small >= 6) centre('dining4', room); break;
-      case 'bath': wall('wc', room); wall('basin', room); wall('shower', room, small < 5 ? { w: 2.8, d: 2.8 } : {}); break;
+      case 'bath': wall('wc', room); wall('basin', room); [{}, { w: 2.8, d: 2.8 }, { w: 2.5, d: 2.5 }].some(o => wall('shower', room, o)); break;
       case 'study': { const dk = wall('desk', room); const ch = dk && front(dk, 'officeChair', -0.2); if (ch) ch.rot = (dk.rot + 180) % 360; break; }
       case 'pooja': wall('mandir', room, { elev: 2.8 }); break;
       case 'utility': wall('washer', room); break;
@@ -3964,7 +3965,8 @@ function autoFurnish(st) {
 }
 
 /* ---------- homes list ---------- */
-function flushSave() { if (!state) return; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { } }
+var leavingHome = false;   // set once a reload to another home is underway — stop saving the old design
+function flushSave() { if (!state || leavingHome) return; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { } }
 function openHome(id) {
   flushSave();
   try { localStorage.setItem(ACTIVE_KEY, JSON.stringify(id)); } catch (e) { }
@@ -3993,7 +3995,7 @@ function deleteHome(id) {
   askConfirm(`Delete “${p.name}” and its whole design? This can’t be undone.`, () => {
     saveProjectList(listProjects().filter(x => x.id !== id));
     try { localStorage.removeItem(planKey(id)); localStorage.removeItem(designKey(id)); } catch (e) { }
-    if (id === PLAN.id) { state = null; openHome('unit1'); } else openProjects();
+    if (id === PLAN.id) { leavingHome = true; openHome('unit1'); } else openProjects();
   });
 }
 function exportHome(id) {
@@ -4427,7 +4429,7 @@ function pePrompt(W, H) {
   return `This is an architectural floor-plan image (${W}×${H} px) for a 3D interior-design tool. Read it and call submit_floor_plan.
 Rules:
 - Units are feet. Origin (0,0) = top-left corner of the outer wall outline; x grows to the right, y grows downward, same orientation as the image (do not rotate).
-- Use the written dimensions (e.g. 11'0" x 9'7", 3350 x 2900, 3.35 m) to get real sizes; convert metric to feet. Room sizes written inside rooms on Indian plans are usually clear internal sizes — wall centre-lines sit about 0.25 ft outside them.
+- Use the written dimensions (e.g. 11'0" x 9'7", 3350 x 2900, 3.35 m) to get real sizes; convert metric to feet. Room sizes written inside rooms are usually clear internal sizes — wall centre-lines sit about 0.25 ft outside them.
 - Walls: straight centre-lines, each strictly horizontal or vertical. Include every exterior wall and every interior partition; split a wall wherever it turns. Ignore furniture, fixtures, hatching, text and dimension lines.
 - Openings: doors (leaf + swing arc), windows (thin double/triple lines inside a wall) and plain openings (gaps with no door). Give from/to as distances in feet from the wall's (x1,y1) end. Mark the flat's main entrance door with main_entrance: true.
 - Rooms: one or more axis-aligned rectangles whose edges sit on wall centre-lines, so neighbouring rooms share edges and rooms do not overlap. Types: ${PE_ROOM_ENUM.join(', ')} (bath = toilet / bathroom / WC, passage = corridor / lobby / foyer, utility = wash / dry area). List the master (largest) bedroom first.
@@ -4554,7 +4556,7 @@ function peSave() {
     } else if (editing) { if (PLAN.id === id) flushSave(); const d = lsGet(designKey(id), null); if (d && d.vastu) { d.vastu.facing = plan.facing; d.vastu.userSet = false; localStorage.setItem(designKey(id), JSON.stringify(d)); } }
     const list = listProjects().filter(p => p.id !== id); list.push({ id, name: plan.name, sub: plan.sub }); saveProjectList(list);
   } catch (e) { return peHint('Browser storage is full — delete an old home first.', true); }
-  if (PLAN.id === id) state = null;   // don't let the old in-memory design overwrite the updated one
+  if (PLAN.id === id) leavingHome = true;   // don't let the old in-memory design overwrite the updated one
   openHome(id);
 }
 (function peWire() {
@@ -4572,7 +4574,7 @@ function peSave() {
     window.addEventListener('paste', e => { if (!PE.open) return; const f = [...(e.clipboardData || {}).files || []].find(x => /^image\//.test(x.type)); if (f) peImageFile(f); });
   });
 })();
-window.addEventListener('beforeunload', () => { if (state) flushSave(); });
+window.addEventListener('beforeunload', () => flushSave());
 
 /* =====================================================================
    BOOT
